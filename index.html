@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Transposer — ShrimpWeb</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=1">
+</head>
+<body>
+<div class="gi-ripple-bg" aria-hidden="true">
+    <canvas class="gi-ripple-canvas"></canvas>
+</div>
+<script>
+(function () {
+  var scriptEl = document.currentScript;
+  if (!scriptEl) return;
+  var root = scriptEl.previousElementSibling;
+  if (!root || !root.classList || !root.classList.contains("gi-ripple-bg")) {
+    var all = document.querySelectorAll(".gi-ripple-bg");
+    root = all.length ? all[all.length - 1] : null;
+  }
+  if (!root) return;
+  var canvas = root.querySelector(".gi-ripple-canvas");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var w = 0, h = 0, t = 0, raf = null, waterPower = 0.72;
+
+  function resize() {
+    var rect = root.getBoundingClientRect();
+    w = Math.max(2, Math.floor(rect.width));
+    h = Math.max(2, Math.floor(rect.height));
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function drawBaseWhite() {
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  function drawGradientWater(time, intensity) {
+    if (intensity <= 0.001) return;
+    var grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, "#8559A5");
+    grad.addColorStop(1, "#59a59a");
+    ctx.save();
+    ctx.globalAlpha = 0.12 * intensity;
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    var wave1 = 8 + Math.sin(time * 0.0006) * 2;
+    var wave2 = 13 + Math.cos(time * 0.0004) * 2;
+    ctx.globalAlpha = 0.09 * intensity;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.64);
+    for (var x = 0; x <= w; x += 12) {
+      ctx.lineTo(x, h * 0.64 + Math.sin((x * 0.015) + time * 0.0011) * wave1);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    ctx.globalAlpha = 0.055 * intensity;
+    ctx.beginPath();
+    ctx.moveTo(0, h * 0.5);
+    for (var x2 = 0; x2 <= w; x2 += 14) {
+      ctx.lineTo(x2, h * 0.5 + Math.sin((x2 * 0.011) - time * 0.00095) * wave2);
+    }
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  function render(ts) {
+    t = ts || 0;
+    drawBaseWhite();
+    drawGradientWater(t, waterPower);
+    raf = requestAnimationFrame(render);
+  }
+
+  resize();
+  render(0);
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(resize).observe(root);
+  } else {
+    window.addEventListener("resize", resize);
+  }
+})();
+</script>
+
+<div class="sw-page">
+    <header class="sw-header">
+        <a class="sw-brand" href="https://shrimpweb.com/">
+            <svg class="sw-brand-mark" width="42" viewBox="0 0 170.6 186.16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                    <linearGradient id="swHeaderLogoGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="170.6" y2="186.16">
+                        <stop offset="0%" stop-color="#8559A5"/>
+                        <stop offset="50%" stop-color="#59a59a"/>
+                        <stop offset="100%" stop-color="#5f3f78"/>
+                    </linearGradient>
+                </defs>
+                <g fill="url(#swHeaderLogoGradient)" fill-rule="evenodd">
+                    <path d="M146.84,78.19c-2.93,11.37-13.52,20.13-25.11,21.52-12.79,1.54-27.36-.75-40.26.26-18.09,1.42-23.05,26.22-7.76,35.35,6.87,4.1,11.72,1.98,18.78,2.8,1.98.23,3.04,1.23,4.58,2.29l37.58-16.53c4.87-1.62,10.68,2.64,11.22,7.62,1.11,10.24-8.43,20.27-17.51,23.5,9.08,2.87,18.8,13.44,17.48,23.48-.7,5.32-7.22,9.02-12.21,7.21-12.04-4.8-24.05-9.67-35.87-14.99-.74-.14-.77.62-1.18.96-1.29,1.08-3.38,2.18-5.06,2.37-6.62.77-14.56-.53-21.32.04-53.64-1.58-87.18-58.5-61.29-106.39,11.53-21.34,34.61-36.97,59.13-38.21,16.77-.85,34.24.66,51.09,0,14.25.83,26.32,10.95,28.51,25.19.51.72,3.75-.49,4.51-.79,19.13-7.42,15.47-35.51-5.45-36.88H45.76c-6.17.16-14.99-7.01-14.99-13.3V0l5.28.24c-.63,5.67,3.24,10.37,8.78,11.24l102.12.02c28.46,1.87,32.15,41.79,4.43,48.09-1.14.26-2.48.21-3.36.72v11.87M66.71,69.08c-.89,6.31.11,12.29,5.33,16.37,2.81,2.2,3.13,1.04,6.13.65,13.37-1.75,28.02.44,41.46-.5,7.42-.52,13.01-7.38,13.53-14.52.86-11.69.68-25.11-13.79-26.97-30.01,1.91-60.46-7.29-85.11,14.39-31.37,27.6-23.48,82.08,16.53,96.86,1.95.72,6.71,2.4,8.58,2.1,3-.48,8.18-5.74,8.79-8.8-9.08-4.2-15.62-12.47-17.78-22.26-2.96-.39-5.72-.56-8.63-1.32-1.01-.26-5.99-1.9-6.31-2.57-.35-.72,1.63-3.67,1.97-4.57,3.95,1.23,7.88,2.59,12.09,2.56.45-.33.17-3.31.23-4.09.38-4.65,1.92-9.33,4.07-13.43-6.78-2.23-12.98-7.03-15.84-13.64.8-.26,4.29-2.88,4.79-2.52,1.43,3.61,4.44,6.71,7.77,8.66,1.23.72,5.69,2.83,6.88,2.24.15-.08,1.79-2.1,2.27-2.53,2.38-2.16,5.13-3.86,7.8-5.63-.98-1.25-2.18-2.32-3.07-3.64-3.57-5.26-4.3-11.94-2.92-18.06l5.24,1.23Z"/>
+                    <path d="M115.84,52.09c4.52-.4,8.24,4.28,6.88,8.57-1.86,5.84-10.17,6.12-12.39.4-1.6-4.14,1.05-8.58,5.51-8.97Z"/>
+                    <path d="M141.73,71.67c.44-.78,4.28-.31,5.17-.19,22.65,3.03,23.4,30.12.28,35.7l-75.54,14.45c-6.91,1.13,0,0-12.54,1.94l-1.85.23,1.66,5.8c12.64-2.58,6.41-1.67,12.64-2.58l76.85-14.71c31.46-7.61,28.71-45.8-3.35-46-1.31,0-2.8.32-3.88.02"/>
+                </g>
+            </svg>
+            <span class="sw-brand-text">
+                <span class="sw-brand-name">ShrimpWeb</span>
+                <span class="sw-brand-tag">Design. Hosting. Support.</span>
+            </span>
+        </a>
+        <a class="sw-header-link" href="https://shrimpweb.com/">Back to site</a>
+    </header>
+
+    <main class="tx-page">
+        <p class="sw-kicker">Free tool</p>
+        <h1>Song Transposer</h1>
+        <p class="sw-sub">Paste a chord chart, shift it up or down by semitones, and copy the new key. Works with chord lines and [ChordPro] brackets.</p>
+        <div class="sw-points" aria-label="Features">
+            <span class="sw-point">±12 semitones</span>
+            <span class="sw-point">Key to key</span>
+            <span class="sw-point">Sharps or flats</span>
+            <span class="sw-point">Slash chords</span>
+        </div>
+
+        <div class="tx-shell">
+            <div class="feature-accent-bar"></div>
+            <div class="tx-box">
+                <div class="controls">
+                    <div class="control">
+                        <label for="semitoneSlider">Semitones <span class="semitone-value" id="semitoneValue">0</span></label>
+                        <div class="semitone-row">
+                            <button type="button" class="step-btn" id="downBtn" aria-label="Down one semitone">−</button>
+                            <input type="range" id="semitoneSlider" min="-12" max="12" value="0" step="1">
+                            <button type="button" class="step-btn" id="upBtn" aria-label="Up one semitone">+</button>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <label for="fromKey">From key</label>
+                        <select id="fromKey"></select>
+                    </div>
+                    <div class="control">
+                        <label for="toKey">To key</label>
+                        <select id="toKey"></select>
+                    </div>
+                    <div class="control copy-wrap">
+                        <label>Accidentals</label>
+                        <div class="accidentals">
+                            <button type="button" class="chip active" id="sharpBtn">#</button>
+                            <button type="button" class="chip" id="flatBtn">b</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="key-shift" aria-live="polite">
+                    <span class="key-pill" id="fromPill">G</span>
+                    <span>→</span>
+                    <span class="key-pill to" id="toPill">G</span>
+                    <span id="shiftLabel">same pitch</span>
+                </div>
+
+                <div class="editors">
+                    <div class="editor">
+                        <div class="editor-head">
+                            <h2>Original</h2>
+                            <div>
+                                <button type="button" class="sw-btn-secondary" id="sampleBtn">Load sample</button>
+                                <button type="button" class="sw-btn-secondary" id="clearBtn">Clear</button>
+                            </div>
+                        </div>
+                        <textarea id="input" spellcheck="false" placeholder="Paste chords and lyrics here…"></textarea>
+                    </div>
+                    <div class="editor">
+                        <div class="editor-head">
+                            <h2>Transposed</h2>
+                            <button type="button" class="sw-btn" id="copyBtn">Copy result</button>
+                        </div>
+                        <textarea id="output" readonly spellcheck="false" placeholder="Transposed chords appear here…"></textarea>
+                    </div>
+                </div>
+
+                <p class="hint">Tip: keep chords on their own line above the lyrics, or wrap them like [Am]. Bass notes in slash chords (G/B) move with the shift. Want to pitch-shift an audio file instead? Use the <a href="https://shrimpweb.com/pitch/" style="color:#8559A5;font-weight:700;text-decoration:none;">audio pitch transposer</a>.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="sw-footer">
+        <a href="https://shrimpweb.com/">ShrimpWeb</a>
+        <span class="sw-footer-sep">•</span>
+        <a href="https://shrimpweb.com/privacy">Privacy</a>
+        <span class="sw-footer-sep">•</span>
+        <a href="https://shrimpweb.com/terms">Terms</a>
+        <span class="sw-footer-sep">•</span>
+        <a href="https://shrimpweb.com/impressum">Imprint</a>
+    </footer>
+</div>
+
+<script src="script.js?v=1"></script>
+<script src="https://shrimpweb.com/apps/launcher.js?v=1" defer></script>
+</body>
+</html>
